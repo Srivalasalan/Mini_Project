@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Order Management</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <h1>Admin Panel - Order Management</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Roll No</th>
+                <th>Phone</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="orderTable"></tbody>
+    </table>
+
+    <script>
+        function loadOrders() {
+            fetch('http://localhost:8080/orders')
+                .then(response => response.json())
+                .then(orders => {
+                    const tableBody = document.getElementById('orderTable');
+                    tableBody.innerHTML = '';
+
+                    orders.forEach((order, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${order.name}</td>
+                            <td>${order.rollNo}</td>
+                            <td>${order.phone}</td>
+                            <td>${order.items.map(item => `${item.name} x${item.quantity}`).join('<br>')}</td>
+                            <td>₹${order.total}</td>
+                            <td>${order.status}</td>
+                            <td>
+                                <button onclick="updateStatus(${index}, 'Ready')">Mark as Ready</button>
+                                <button onclick="updateStatus(${index}, 'Delivered')">Mark as Delivered</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching orders:', error));
+        }
+
+        function updateStatus(orderIndex, status) {
+            fetch(`http://localhost:8080/order/${orderIndex}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert(`Order marked as ${status}`);
+                loadOrders(); // Refresh the table
+            })
+            .catch(error => console.error('Error updating status:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
+</body>
+</html>
